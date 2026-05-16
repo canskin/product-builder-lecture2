@@ -6,33 +6,57 @@
   <title>로또 번호 추천기</title>
 
   <style>
+    :root {
+      --bg-color: #4169E1;
+      --container-bg: #fff;
+      --text-color: #333;
+      --sub-text: #666;
+      --numbers-bg: #f7f7f7;
+      --set-title-color: #777;
+      --notice-color: #999;
+      --box-shadow: rgba(0,0,0,0.2);
+    }
+
+    body.dark {
+      --bg-color: #0a0e27;
+      --container-bg: #1a1f3a;
+      --text-color: #e0e0e0;
+      --sub-text: #aaa;
+      --numbers-bg: #252b4a;
+      --set-title-color: #bbb;
+      --notice-color: #777;
+      --box-shadow: rgba(0,0,0,0.4);
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #4169E1;
+      background: var(--bg-color);
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+      transition: background 0.3s;
     }
 
     .container {
-      background: white;
+      background: var(--container-bg);
       width: 90%;
       max-width: 650px;
       padding: 40px 25px;
       border-radius: 20px;
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      box-shadow: 0 10px 30px var(--box-shadow);
+      transition: background 0.3s;
     }
 
     h1 {
       margin-bottom: 10px;
-      color: #333;
+      color: var(--text-color);
     }
 
     p {
-      color: #666;
+      color: var(--sub-text);
       margin-bottom: 30px;
     }
 
@@ -50,14 +74,14 @@
       gap: 10px;
       padding: 12px;
       border-radius: 14px;
-      background: #f7f7f7;
+      background: var(--numbers-bg);
     }
 
     .set-title {
       width: 100%;
       font-size: 14px;
       font-weight: bold;
-      color: #777;
+      color: var(--set-title-color);
       margin-bottom: 4px;
     }
 
@@ -72,10 +96,32 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 10px var(--box-shadow);
     }
 
-    button {
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--container-bg);
+      border: none;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      font-size: 22px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px var(--box-shadow);
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.1);
+    }
+
+    .generate-btn {
       border: none;
       background: #ff5722;
       color: white;
@@ -86,7 +132,7 @@
       transition: 0.2s;
     }
 
-    button:hover {
+    .generate-btn:hover {
       background: #e64a19;
       transform: scale(1.05);
     }
@@ -94,12 +140,14 @@
     .notice {
       margin-top: 25px;
       font-size: 13px;
-      color: #999;
+      color: var(--notice-color);
     }
   </style>
 </head>
 
 <body>
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+
   <div class="container">
     <h1>로또 번호 추천기</h1>
     <p>버튼을 누르면 1부터 45까지의 숫자 중 6개 번호를 5세트 추천합니다.</p>
@@ -116,7 +164,7 @@
       </div>
     </div>
 
-    <button onclick="generateFiveLotto()">로또 번호 5개 추천받기</button>
+    <button class="generate-btn" onclick="generateFiveLotto()">로또 번호 5개 추천받기</button>
 
     <div class="notice">
       재미용 번호 추천입니다. 실제 당첨을 보장하지 않습니다.
@@ -181,6 +229,23 @@
         lottoList.appendChild(numberBox);
       }
     }
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      const isDark = document.body.classList.contains("dark");
+      document.getElementById("themeToggle").textContent = isDark ? "☀️" : "🌙";
+      localStorage.setItem("theme", isDark ? "dark" : "bright");
+    }
+
+    function loadTheme() {
+      const saved = localStorage.getItem("theme");
+      if (saved === "dark") {
+        document.body.classList.add("dark");
+        document.getElementById("themeToggle").textContent = "☀️";
+      }
+    }
+
+    loadTheme();
   </script>
 </body>
 </html>
