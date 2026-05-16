@@ -99,6 +99,33 @@
       box-shadow: 0 4px 10px var(--box-shadow);
     }
 
+    .mbti-section {
+      margin-bottom: 28px;
+    }
+
+    .mbti-label {
+      display: block;
+      font-size: 15px;
+      color: var(--sub-text);
+      margin-bottom: 8px;
+    }
+
+    .mbti-select {
+      padding: 10px 24px;
+      font-size: 16px;
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      background: var(--numbers-bg);
+      color: var(--text-color);
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .mbti-select:focus {
+      border-color: #4169E1;
+    }
+
     .theme-toggle {
       position: fixed;
       top: 20px;
@@ -152,7 +179,33 @@
 
   <div class="container">
     <h1>로또 번호 추천기</h1>
-    <p>버튼을 누르면 1부터 45까지의 숫자 중 6개 번호를 5세트 추천합니다.</p>
+    <p>MBTI를 선택하고 번호를 추천받아보세요!</p>
+
+    <div class="mbti-section">
+      <form id="mbtiForm" action="https://formspree.io/f/mlgvreeo" method="POST">
+        <label class="mbti-label" for="mbtiSelect">나의 MBTI</label>
+        <select class="mbti-select" name="mbti" id="mbtiSelect" required>
+          <option value="">-- 선택 --</option>
+          <option value="ISTJ">ISTJ</option>
+          <option value="ISFJ">ISFJ</option>
+          <option value="INFJ">INFJ</option>
+          <option value="INTJ">INTJ</option>
+          <option value="ISTP">ISTP</option>
+          <option value="ISFP">ISFP</option>
+          <option value="INFP">INFP</option>
+          <option value="INTP">INTP</option>
+          <option value="ESTP">ESTP</option>
+          <option value="ESFP">ESFP</option>
+          <option value="ENFP">ENFP</option>
+          <option value="ENTP">ENTP</option>
+          <option value="ESTJ">ESTJ</option>
+          <option value="ESFJ">ESFJ</option>
+          <option value="ENFJ">ENFJ</option>
+          <option value="ENTJ">ENTJ</option>
+        </select>
+        <input type="hidden" name="lotto_numbers" id="lottoNumbersField" />
+      </form>
+    </div>
 
     <div class="lotto-list" id="lottoList">
       <div class="numbers">
@@ -166,7 +219,7 @@
       </div>
     </div>
 
-    <button class="generate-btn" onclick="generateFiveLotto()">로또 번호 5개 추천받기</button>
+    <button class="generate-btn" onclick="generateAndSubmit()">로또 번호 5개 추천받기</button>
 
     <div class="notice">
       재미용 번호 추천입니다. 실제 당첨을 보장하지 않습니다.
@@ -174,49 +227,60 @@
   </div>
 
   <script>
-    function generateOneLotto() {
+    let genCount = 0;
+
+    function mbtiSeed(mbti) {
+      let hash = 0;
+      for (let i = 0; i < mbti.length; i++) {
+        hash = hash * 31 + mbti.charCodeAt(i);
+      }
+      return hash;
+    }
+
+    function createSeededRandom(seed) {
+      let s = Math.abs(seed) || 1;
+      return function () {
+        s = (s * 1664525 + 1013904223) & 0x7FFFFFFF;
+        return (s >>> 0) / 0x7FFFFFFF;
+      };
+    }
+
+    function generateOneLotto(mbti) {
+      genCount++;
+      const baseSeed = mbtiSeed(mbti || "ISTJ");
+      const rng = createSeededRandom(baseSeed + genCount * 997);
+
       const lottoNumbers = [];
-
       while (lottoNumbers.length < 6) {
-        const number = Math.floor(Math.random() * 45) + 1;
-
-        if (!lottoNumbers.includes(number)) {
-          lottoNumbers.push(number);
+        const num = Math.floor(rng() * 45) + 1;
+        if (!lottoNumbers.includes(num)) {
+          lottoNumbers.push(num);
         }
       }
 
       lottoNumbers.sort((a, b) => a - b);
-
       return lottoNumbers;
     }
 
     function getBallColor(number) {
-      if (number <= 10) {
-        return "#fbc400";
-      } else if (number <= 20) {
-        return "#69c8f2";
-      } else if (number <= 30) {
-        return "#ff7272";
-      } else if (number <= 40) {
-        return "#aaa";
-      } else {
-        return "#b0d840";
-      }
+      if (number <= 10) return "#fbc400";
+      else if (number <= 20) return "#69c8f2";
+      else if (number <= 30) return "#ff7272";
+      else if (number <= 40) return "#aaa";
+      else return "#b0d840";
     }
 
-    function generateFiveLotto() {
+    function renderLottoSets(sets) {
       const lottoList = document.getElementById("lottoList");
       lottoList.innerHTML = "";
 
-      for (let i = 1; i <= 5; i++) {
-        const lottoNumbers = generateOneLotto();
-
+      sets.forEach((lottoNumbers, i) => {
         const numberBox = document.createElement("div");
         numberBox.className = "numbers";
 
         const title = document.createElement("div");
         title.className = "set-title";
-        title.textContent = i + "번 추천번호";
+        title.textContent = i + 1 + "번 추천번호 (" + document.getElementById("mbtiSelect").value + ")";
         numberBox.appendChild(title);
 
         lottoNumbers.forEach(number => {
@@ -224,13 +288,62 @@
           ball.className = "ball";
           ball.textContent = number;
           ball.style.background = getBallColor(number);
-
           numberBox.appendChild(ball);
         });
 
         lottoList.appendChild(numberBox);
+      });
+    }
+
+    function generateAndSubmit() {
+      const select = document.getElementById("mbtiSelect");
+      const mbti = select.value;
+
+      if (!mbti) {
+        alert("MBTI를 먼저 선택해주세요!");
+        select.focus();
+        return;
+      }
+
+      // generate 5 sets
+      const sets = [];
+      for (let i = 0; i < 5; i++) {
+        sets.push(generateOneLotto(mbti));
+      }
+
+      renderLottoSets(sets);
+
+      // submit to Formspree
+      const numbersText = sets.map(s => s.join(", ")).join(" | ");
+      document.getElementById("lottoNumbersField").value = numbersText;
+
+      const form = document.getElementById("mbtiForm");
+      const formData = new FormData(form);
+
+      fetch("https://formspree.io/f/mlgvreeo", {
+        method: "POST",
+        body: formData,
+        headers: { Accept: "application/json" },
+      })
+        .then(r => r.json())
+        .then(data => {
+          console.log("Formspree OK", data);
+        })
+        .catch(err => {
+          console.error("Formspree error", err);
+        });
+    }
+
+    function loadMbti() {
+      const saved = localStorage.getItem("mbti");
+      if (saved) {
+        document.getElementById("mbtiSelect").value = saved;
       }
     }
+
+    document.getElementById("mbtiSelect").addEventListener("change", function () {
+      localStorage.setItem("mbti", this.value);
+    });
 
     function toggleTheme() {
       document.body.classList.toggle("dark");
@@ -248,6 +361,7 @@
     }
 
     loadTheme();
+    loadMbti();
   </script>
 </body>
 </html>
